@@ -140,10 +140,10 @@ the `app` container command with
 watcher's image, resources, environment, secrets, IAM roles, and network settings.
 The regular registry watcher service continues running alongside it.
 
-Schedules in the `docs-rs` group share the `docs-rs-scheduler` IAM role. It can
-launch any revision of `docs-rs-*` task definitions in this cluster and pass the
-`docs-rs-*` task roles and `ecs-task-execution--docs-rs-*` execution roles to ECS.
-Future scheduled jobs following these naming conventions can reuse the role.
+Schedules in the `docs-rs` group assume the `docs-rs-scheduler` IAM role. It can
+only launch revisions of the watcher task definition in this cluster and pass the
+watcher's task and execution roles to ECS. Grant access to other task
+definitions explicitly when another scheduled job needs them.
 
 Synchronization logs go to Datadog with `service:docs-rs-registry-watcher`.
 Scheduler retries failed launch requests up to three times within an hour; it

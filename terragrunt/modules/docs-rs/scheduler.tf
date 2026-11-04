@@ -23,16 +23,18 @@ resource "aws_iam_role" "scheduler" {
 }
 
 resource "aws_iam_role_policy" "scheduler" {
-  name = "run-docs-rs-tasks"
+  name = "run-watcher-tasks"
   role = aws_iam_role.scheduler.id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = ["ecs:RunTask"]
-        Resource = "arn:${data.aws_partition.builder.partition}:ecs:${data.aws_region.builder.region}:${local.account_id}:task-definition/docs-rs-*:*"
+        Effect = "Allow"
+        Action = ["ecs:RunTask"]
+        Resource = [
+          "${replace(module.watcher.task_arn, "/:[0-9]+$/", "")}:*",
+        ]
         Condition = {
           ArnEquals = {
             "ecs:cluster" = var.cluster_config.cluster_id
@@ -40,13 +42,9 @@ resource "aws_iam_role_policy" "scheduler" {
         }
       },
       {
-        Effect = "Allow"
-        Action = ["iam:PassRole"]
-        # Match the task and execution role names created by the ecs-task module.
-        Resource = [
-          "arn:${data.aws_partition.builder.partition}:iam::${local.account_id}:role/docs-rs-*",
-          "arn:${data.aws_partition.builder.partition}:iam::${local.account_id}:role/ecs-task-execution--docs-rs-*",
-        ]
+        Effect   = "Allow"
+        Action   = ["iam:PassRole"]
+        Resource = [module.watcher.task_role_arn, module.watcher.execution_role_arn]
         Condition = {
           StringEquals = {
             "iam:PassedToService" = "ecs-tasks.amazonaws.com"
